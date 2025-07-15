@@ -37,8 +37,9 @@ questions = [
 
 @app.route('/whatsapp', methods=['POST'])
 def whatsapp_bot():
+    print("INCOMING FORM DATA:", request.form)  # Debug-Ausgabe
     from_number = request.form.get('From')
-    body = request.form.get('Body').strip()
+    body = request.form.get('Body', '').strip()
 
     # Initialisiere Session, falls neu
     if from_number not in sessions:
