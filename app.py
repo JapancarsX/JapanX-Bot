@@ -2,6 +2,7 @@ from flask import Flask, request
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from twilio.twiml.messaging_response import MessagingResponse  # <--- hinzugefügt
 
 app = Flask(__name__)
 
@@ -41,6 +42,8 @@ def whatsapp_bot():
     from_number = request.form.get('From')
     body = request.form.get('Body', '').strip().lower()
 
+    resp = MessagingResponse()
+
     # Initialisiere Session, falls neu
     if from_number not in sessions:
         sessions[from_number] = {'step': 0, 'answers': []}
@@ -53,27 +56,32 @@ def whatsapp_bot():
         if body in ['hallo', 'hi', 'hey', 'guten tag', 'servus']:
             question = questions[0]
             session['step'] += 1
-            return question
+            resp.message(question)
+            return str(resp)
         else:
-            return "Bitte beginne mit 'Hallo', um den Prozess zu starten."
+            resp.message("Bitte beginne mit 'Hallo', um den Prozess zu starten.")
+            return str(resp)
 
     # Speichere Antwort, wenn nicht Begrüßung
     if step > 0:
         # Sonderbehandlung für Option 2 bei Schritt 1
         if step == 1 and body == '2':
             session['step'] += 1
-            return (
+            info = (
                 "\U0001F501 Japan X begleitet seit 2015 erfolgreich den Import hochwertiger Fahrzeuge aus Japan.\n"
                 "Über 100 zufriedene Kunden vertrauen bereits auf unsere Erfahrung und Abwicklung.\n\n"
                 "Lass uns jetzt dein Wunschfahrzeug finden! \U0001F60A\n"
                 f"{questions[1]}"
             )
-        # Validierung für Schritt 1–3
+            resp.message(info)
+            return str(resp)
+
         if step in [1, 2, 3] and body in ['egal', 'weiß nicht', 'ka', 'k.a.', 'keine ahnung']:
-            return (
+            resp.message(
                 "Bitte gib eine möglichst genaue Angabe, damit wir das passende Fahrzeug für dich finden können.\n"
                 f"{questions[step]}"
             )
+            return str(resp)
 
         session['answers'].append(body)
 
@@ -81,15 +89,18 @@ def whatsapp_bot():
     if step >= len(questions) - 1:
         send_email(session['answers'], from_number)
         del sessions[from_number]  # Session löschen
-        return (
+        abschied = (
             "Vielen Dank für deine Angaben! \U0001F64F\n\n"
             "Wir haben deine Anfrage per E-Mail erfasst und an unser Team weitergeleitet."
             "\nDie weitere Kommunikation erfolgt per E-Mail – du erhältst schnellstmöglich eine Rückmeldung. \U0001F4E7"
         )
+        resp.message(abschied)
+        return str(resp)
 
     # Nächste Frage stellen
     session['step'] += 1
-    return questions[session['step']]
+    resp.message(questions[session['step']])
+    return str(resp)
 
 def send_email(answers, user_id):
     msg = MIMEMultipart()
