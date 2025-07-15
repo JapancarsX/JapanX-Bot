@@ -8,7 +8,7 @@ app = Flask(__name__)
 # Root route for Render deployment
 @app.route('/')
 def home():
-    return "🚗 JapanX WhatsApp-Bot läuft! Verwende /whatsapp für Anfragen."
+    return "\U0001F697 JapanX WhatsApp-Bot läuft! Verwende /whatsapp für Anfragen."
 
 # Temporäre Speicherung von Sitzungen (pro Nummer)
 sessions = {}
@@ -24,7 +24,7 @@ EMAIL_RECEIVER = os.environ.get('EMAIL_RECEIVER')
 
 # Fragen im Ablauf (angepasst)
 questions = [
-    "Willkommen bei Japan X! 🇯🇵\n\n"
+    "Willkommen bei Japan X! \U0001F1EF\U0001F1F5\n\n"
     "Ich bin der Chatbot von Japan X. Ich begleite dich auf dem Weg zu deinem Traumauto – schnell, einfach und unverbindlich.\n\n"
     "Bevor wir starten, wähle bitte eine Option:\n"
     "1⃣ Auto suchen\n"
@@ -39,7 +39,7 @@ questions = [
 def whatsapp_bot():
     print("INCOMING FORM DATA:", request.form)  # Debug-Ausgabe
     from_number = request.form.get('From')
-    body = request.form.get('Body', '').strip()
+    body = request.form.get('Body', '').strip().lower()
 
     # Initialisiere Session, falls neu
     if from_number not in sessions:
@@ -48,40 +48,48 @@ def whatsapp_bot():
     session = sessions[from_number]
     step = session['step']
 
-    # Speichere Antwort, wenn nicht erster Schritt (Begrüßung)
+    # Begrüßungserkennung bei Schritt 0
+    if step == 0:
+        if body in ['hallo', 'hi', 'hey', 'guten tag', 'servus']:
+            question = questions[0]
+            session['step'] += 1
+            return question
+        else:
+            return "Bitte beginne mit 'Hallo', um den Prozess zu starten."
+
+    # Speichere Antwort, wenn nicht Begrüßung
     if step > 0:
         # Sonderbehandlung für Option 2 bei Schritt 1
-        if step == 1 and body.strip() == '2':
+        if step == 1 and body == '2':
+            session['step'] += 1
             return (
-                "🔁 Japan X begleitet seit 2015 erfolgreich den Import hochwertiger Fahrzeuge aus Japan.\n"
+                "\U0001F501 Japan X begleitet seit 2015 erfolgreich den Import hochwertiger Fahrzeuge aus Japan.\n"
                 "Über 100 zufriedene Kunden vertrauen bereits auf unsere Erfahrung und Abwicklung.\n\n"
-                "Lass uns jetzt dein Wunschfahrzeug finden! 😊\n"
-                "Welche Automarke suchst du? (z. B. Toyota, Honda, Nissan...)"
+                "Lass uns jetzt dein Wunschfahrzeug finden! \U0001F60A\n"
+                f"{questions[1]}"
             )
         # Validierung für Schritt 1–3
-        if step in [1, 2, 3] and body.lower() in ['egal', 'weiß nicht', 'ka', 'k.a.', 'keine ahnung']:
+        if step in [1, 2, 3] and body in ['egal', 'weiß nicht', 'ka', 'k.a.', 'keine ahnung']:
             return (
                 "Bitte gib eine möglichst genaue Angabe, damit wir das passende Fahrzeug für dich finden können.\n"
-                f"{questions[step - 1]}"
+                f"{questions[step]}"
             )
 
         session['answers'].append(body)
 
     # Prüfe, ob alle Fragen beantwortet wurden
-    if step >= len(questions):
+    if step >= len(questions) - 1:
         send_email(session['answers'], from_number)
         del sessions[from_number]  # Session löschen
         return (
-            "Vielen Dank für deine Angaben! 🙏\n\n"
+            "Vielen Dank für deine Angaben! \U0001F64F\n\n"
             "Wir haben deine Anfrage per E-Mail erfasst und an unser Team weitergeleitet."
-            "\nDie weitere Kommunikation erfolgt per E-Mail – du erhältst schnellstmöglich eine Rückmeldung. 📧"
+            "\nDie weitere Kommunikation erfolgt per E-Mail – du erhältst schnellstmöglich eine Rückmeldung. \U0001F4E7"
         )
 
     # Nächste Frage stellen
-    question = questions[step]
     session['step'] += 1
-    return question
-
+    return questions[session['step']]
 
 def send_email(answers, user_id):
     msg = MIMEMultipart()
