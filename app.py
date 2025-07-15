@@ -5,6 +5,11 @@ from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 
+# Root route for Render deployment
+@app.route('/')
+def home():
+    return "🚗 JapanX WhatsApp-Bot läuft! Verwende /whatsapp für Anfragen."
+
 # Temporäre Speicherung von Sitzungen (pro Nummer)
 sessions = {}
 
@@ -24,10 +29,10 @@ questions = [
     "Bevor wir starten, wähle bitte eine Option:\n"
     "1⃣ Auto suchen\n"
     "2⃣ Informationen zum Ablauf",
-    "Welche Automarke suchst du? (z.\u202fB. Toyota, Honda, Nissan...)",
-    "Welches Modell interessiert dich? (z.\u202fB. Civic, Corolla, Skyline...)",
-    "Wie hoch darf der maximale Kilometerstand sein? (z.\u202fB. unter 100.000 km)",
-    "Gibt es besondere Wünsche oder Anforderungen? (z.\u202fB. Automatik, Schiebedach, Hybrid...)"
+    "Welche Automarke suchst du? (z. B. Toyota, Honda, Nissan...)",
+    "Welches Modell interessiert dich? (z. B. Civic, Corolla, Skyline...)",
+    "Wie hoch darf der maximale Kilometerstand sein? (z. B. unter 100.000 km)",
+    "Gibt es besondere Wünsche oder Anforderungen? (z. B. Automatik, Schiebedach, Hybrid...)"
 ]
 
 @app.route('/whatsapp', methods=['POST'])
@@ -50,7 +55,7 @@ def whatsapp_bot():
                 "🔁 Japan X begleitet seit 2015 erfolgreich den Import hochwertiger Fahrzeuge aus Japan.\n"
                 "Über 100 zufriedene Kunden vertrauen bereits auf unsere Erfahrung und Abwicklung.\n\n"
                 "Lass uns jetzt dein Wunschfahrzeug finden! 😊\n"
-                "Welche Automarke suchst du? (z.\u202fB. Toyota, Honda, Nissan...)"
+                "Welche Automarke suchst du? (z. B. Toyota, Honda, Nissan...)"
             )
         # Validierung für Schritt 1–3
         if step in [1, 2, 3] and body.lower() in ['egal', 'weiß nicht', 'ka', 'k.a.', 'keine ahnung']:
@@ -98,6 +103,6 @@ def send_email(answers, user_id):
         server.login(EMAIL_USER, EMAIL_PASS)
         server.sendmail(EMAIL_USER, EMAIL_RECEIVER, msg.as_string())
 
-# App starten (z.\u202fB. mit gunicorn oder auf Render)
+# App starten (z. B. mit gunicorn oder auf Render)
 if __name__ == '__main__':
     app.run(debug=True)
