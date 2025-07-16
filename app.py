@@ -21,10 +21,10 @@ EMAIL_PASS = os.environ.get('EMAIL_PASS')
 EMAIL_RECEIVER = os.environ.get('EMAIL_RECEIVER')
 
 questions = [
-    "Welche Automarke suchst du? (z.\u202fB. Toyota, Honda, Nissan...)",
-    "Welches Modell interessiert dich? (z.\u202fB. Civic, Corolla, Skyline...)",
-    "Wie hoch darf der maximale Kilometerstand sein? (z.\u202fB. unter 100.000 km)",
-    "Gibt es besondere Wünsche oder Anforderungen? (z.\u202fB. Automatik, Schiebedach, Hybrid...)",
+    "Welche Automarke suchst du? (z. B. Toyota, Honda, Nissan...)",
+    "Welches Modell interessiert dich? (z. B. Civic, Corolla, Skyline...)",
+    "Wie hoch darf der maximale Kilometerstand sein? (z. B. unter 100.000 km)",
+    "Gibt es besondere Wünsche oder Anforderungen? (z. B. Automatik, Schiebedach, Hybrid...)",
     "Hast du noch weitere Wünsche, die wir berücksichtigen sollen?",
     "Wie lautet dein Vor- und Nachname?",
     "Wie lautet deine E-Mail-Adresse?"
@@ -33,7 +33,7 @@ questions = [
 @app.route('/whatsapp', methods=['POST'])
 def whatsapp_bot():
     from_number = request.form.get('From')
-    body = request.form.get('Body', '').strip()
+    body = request.form.get('Body', '').strip().lower()
 
     resp = MessagingResponse()
 
@@ -43,7 +43,7 @@ def whatsapp_bot():
     session = sessions[from_number]
     step = session['step']
 
-    # Begrüßung immer beim ersten Kontakt, egal was der Kunde schreibt
+    # Begrüßung immer beim ersten Kontakt
     if not session['started']:
         session['started'] = True
         session['step'] = 0
@@ -77,7 +77,7 @@ def whatsapp_bot():
             return str(resp)
 
     if session['step'] == 0.5 and session['mode'] == 'info':
-        if body.lower() != 'ja':
+        if body != 'ja':
             resp.message("Kein Problem! Wenn du bereit bist, schreibe einfach 'Hallo', um neu zu starten.")
             del sessions[from_number]
             return str(resp)
@@ -89,7 +89,7 @@ def whatsapp_bot():
     # Fragen-Antworten Ablauf
     if session.get('mode') == 'suche' and isinstance(session['step'], int) and session['step'] >= 1:
         if session['step'] - 1 < len(questions):
-            session['answers'].append(body)
+            session['answers'].append(request.form.get('Body', '').strip())
             session['step'] += 1
             if session['step'] - 1 < len(questions):
                 resp.message(questions[session['step'] - 1])
