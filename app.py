@@ -47,6 +47,7 @@ def whatsapp_bot():
     if not session['started']:
         if body.lower() in ['hallo', 'hi', 'hey', 'guten tag', 'servus']:
             session['started'] = True
+            session['step'] = 0  # Wichtig für Option-Auswahl nach Begrüßung
             resp.message(
                 "Willkommen bei Japan X! \U0001F1EF\U0001F1F5\n\n"
                 "Ich bin der Chatbot von Japan X. Ich begleite dich auf dem Weg zu deinem Traumauto – schnell, einfach und unverbindlich.\n\n"
