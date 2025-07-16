@@ -21,11 +21,6 @@ EMAIL_PASS = os.environ.get('EMAIL_PASS')
 EMAIL_RECEIVER = os.environ.get('EMAIL_RECEIVER')
 
 questions = [
-    "Willkommen bei Japan X! \U0001F1EF\U0001F1F5\n\n"
-    "Ich bin der Chatbot von Japan X. Ich begleite dich auf dem Weg zu deinem Traumauto – schnell, einfach und unverbindlich.\n\n"
-    "Bevor wir starten, wähle bitte eine Option:\n"
-    "1⃣ Auto suchen\n"
-    "2⃣ Informationen zum Ablauf",
     "Welche Automarke suchst du? (z. B. Toyota, Honda, Nissan...)",
     "Welches Modell interessiert dich? (z. B. Civic, Corolla, Skyline...)",
     "Wie hoch darf der maximale Kilometerstand sein? (z. B. unter 100.000 km)",
@@ -43,24 +38,31 @@ def whatsapp_bot():
     resp = MessagingResponse()
 
     if from_number not in sessions:
-        sessions[from_number] = {'step': 0, 'answers': [], 'mode': None}
+        sessions[from_number] = {'step': 0, 'answers': [], 'mode': None, 'started': False}
 
     session = sessions[from_number]
     step = session['step']
 
-    if step == 0:
+    # Einstieg mit Begrüßung
+    if not session['started']:
         if body.lower() in ['hallo', 'hi', 'hey', 'guten tag', 'servus']:
-            session['step'] = 1
-            resp.message(questions[0])
+            session['started'] = True
+            resp.message(
+                "Willkommen bei Japan X! \U0001F1EF\U0001F1F5\n\n"
+                "Ich bin der Chatbot von Japan X. Ich begleite dich auf dem Weg zu deinem Traumauto – schnell, einfach und unverbindlich.\n\n"
+                "Bevor wir starten, wähle bitte eine Option:\n"
+                "1⃣ Auto suchen\n2⃣ Informationen zum Ablauf"
+            )
             return str(resp)
         else:
             resp.message("Bitte beginne mit 'Hallo', um den Prozess zu starten.")
             return str(resp)
 
-    if step == 1:
+    # Auswahl nach Begrüßung
+    if step == 0:
         if body == '2':
             session['mode'] = 'info'
-            session['step'] = 2
+            session['step'] = 0.5  # Zwischenschritt für Bestätigung
             info = (
                 "\U0001F501 Japan X begleitet seit 2015 erfolgreich den Import hochwertiger Fahrzeuge aus Japan.\n"
                 "Über 100 zufriedene Kunden vertrauen bereits auf unsere Erfahrung und Abwicklung.\n\n"
@@ -70,45 +72,41 @@ def whatsapp_bot():
             return str(resp)
         elif body == '1':
             session['mode'] = 'suche'
-            session['step'] = 2
-            resp.message(questions[1])
+            session['step'] = 1
+            resp.message(questions[0])
             return str(resp)
         else:
             resp.message("Bitte antworte mit '1' oder '2'.")
             return str(resp)
 
-    if session.get('mode') == 'info' and step == 2:
+    if session['step'] == 0.5 and session['mode'] == 'info':
         if body.lower() != 'ja':
             resp.message("Kein Problem! Wenn du bereit bist, schreibe einfach 'Hallo', um neu zu starten.")
             del sessions[from_number]
             return str(resp)
         session['mode'] = 'suche'
-        session['step'] = 2
-        resp.message(questions[1])
+        session['step'] = 1
+        resp.message(questions[0])
         return str(resp)
 
-    if session.get('mode') == 'suche' and step >= 2:
-        if body.lower() in ['egal', 'weiß nicht', 'ka', 'k.a.', 'keine ahnung']:
-            resp.message(
-                "Bitte gib eine möglichst genaue Angabe, damit wir das passende Fahrzeug für dich finden können.\n"
-                f"{questions[step - 1]}"
-            )
+    # Fragen-Antworten Ablauf
+    if session.get('mode') == 'suche' and isinstance(session['step'], int) and session['step'] >= 1:
+        if session['step'] - 1 < len(questions):
+            session['answers'].append(body)
+            session['step'] += 1
+            if session['step'] - 1 < len(questions):
+                resp.message(questions[session['step'] - 1])
+            else:
+                send_email(session['answers'], from_number)
+                del sessions[from_number]
+                resp.message(
+                    "Vielen Dank für deine Angaben! \U0001F64F\n\n"
+                    "Wir haben deine Anfrage per E-Mail erfasst und an unser Team weitergeleitet.\n"
+                    "Wir melden uns so schnell wie möglich bei dir zurück! \U0001F4E7"
+                )
             return str(resp)
-        session['answers'].append(body)
 
-    if step - 1 >= len(questions) - 1:
-        send_email(session['answers'], from_number)
-        del sessions[from_number]
-        abschied = (
-            "Vielen Dank für deine Angaben! \U0001F64F\n\n"
-            "Wir haben deine Anfrage per E-Mail erfasst und an unser Team weitergeleitet."
-            "\nWir melden uns so schnell wie möglich bei dir zurück! \U0001F4E7"
-        )
-        resp.message(abschied)
-        return str(resp)
-
-    session['step'] += 1
-    resp.message(questions[session['step'] - 1])
+    resp.message("Etwas ist schiefgelaufen. Bitte starte den Prozess mit 'Hallo' neu.")
     return str(resp)
 
 def send_email(answers, user_id):
