@@ -38,34 +38,28 @@ def whatsapp_bot():
     resp = MessagingResponse()
 
     if from_number not in sessions:
-        sessions[from_number] = {'step': 0, 'answers': [], 'mode': None, 'started': False}
+        sessions[from_number] = {'step': -1, 'answers': [], 'mode': None, 'started': False}
 
     session = sessions[from_number]
     step = session['step']
 
-    # Einstieg mit Begrüßung
-    if not session['started']:
-        if body.lower() in ['hallo', 'hi', 'hey', 'guten tag', 'servus']:
-            session['started'] = True
-            session['step'] = 0  # Wichtig für Option-Auswahl nach Begrüßung
-            resp.message(
-                "Willkommen bei Japan X! \U0001F1EF\U0001F1F5\n\n"
-                "Ich bin der Chatbot von Japan X. Ich begleite dich auf dem Weg zu deinem Traumauto – schnell, einfach und unverbindlich.\n\n"
-                "Bevor wir starten, wähle bitte eine Option:\n"
-                "1⃣ Auto suchen\n2⃣ Informationen zum Ablauf"
-            )
-            return str(resp)
-        elif body in ['1', '2']:
-            session['started'] = True  # automatischer Start bei direkter Optionseingabe
-        else:
-            resp.message("Bitte beginne mit 'Hallo', um den Prozess zu starten.")
-            return str(resp)
+    # Begrüßung immer beim ersten Kontakt
+    if step == -1:
+        session['started'] = True
+        session['step'] = 0
+        resp.message(
+            "Willkommen bei Japan X! \U0001F1EF\U0001F1F5\n\n"
+            "Ich bin der Chatbot von Japan X. Ich begleite dich auf dem Weg zu deinem Traumauto – schnell, einfach und unverbindlich.\n\n"
+            "Bevor wir starten, wähle bitte eine Option:\n"
+            "1⃣ Auto suchen\n2⃣ Informationen zum Ablauf"
+        )
+        return str(resp)
 
     # Auswahl nach Begrüßung
     if step == 0:
         if body == '2':
             session['mode'] = 'info'
-            session['step'] = 0.5  # Zwischenschritt für Bestätigung
+            session['step'] = 0.5
             info = (
                 "\U0001F501 Japan X begleitet seit 2015 erfolgreich den Import hochwertiger Fahrzeuge aus Japan.\n"
                 "Über 100 zufriedene Kunden vertrauen bereits auf unsere Erfahrung und Abwicklung.\n\n"
