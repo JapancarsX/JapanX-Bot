@@ -103,20 +103,30 @@ def whatsapp_bot():
     return str(resp)
 
 def send_email(answers, user_id):
-    msg = MIMEMultipart()
+    msg = MIMEMultipart("alternative")
     msg['From'] = EMAIL_USER
     msg['To'] = EMAIL_RECEIVER
     msg['Subject'] = 'Neue Fahrzeuganfrage von WhatsApp'
 
-    text = f"Neue Anfrage von: {user_id}\n\n"
-    labels = [
-        "Marke", "Modell", "Kilometerstand", "Sonderwünsche"
-    ]
+    labels = ["Marke", "Modell", "Kilometerstand", "Sonderwünsche"]
+    rows = "".join([
+        f"<tr><td><strong>{label}:</strong></td><td>{answer}</td></tr>"
+        for label, answer in zip(labels, answers)
+    ])
 
-    for label, answer in zip(labels, answers):
-        text += f"{label}: {answer}\n"
+    html = f"""
+    <html>
+      <body>
+        <h2>Neue WhatsApp-Anfrage</h2>
+        <p><strong>Absender:</strong> {user_id}</p>
+        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
+          {rows}
+        </table>
+      </body>
+    </html>
+    """
 
-    msg.attach(MIMEText(text, 'plain'))
+    msg.attach(MIMEText(html, 'html'))
 
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
         server.starttls()
