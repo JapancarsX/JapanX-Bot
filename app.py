@@ -54,6 +54,8 @@ def whatsapp_bot():
                 "1⃣ Auto suchen\n2⃣ Informationen zum Ablauf"
             )
             return str(resp)
+        elif body in ['1', '2']:
+            session['started'] = True  # automatischer Start bei direkter Optionseingabe
         else:
             resp.message("Bitte beginne mit 'Hallo', um den Prozess zu starten.")
             return str(resp)
