@@ -43,8 +43,8 @@ def whatsapp_bot():
     session = sessions[from_number]
     step = session['step']
 
-    # Begrüßung immer beim ersten Kontakt
-    if step == -1:
+    # Begrüßung immer beim ersten Kontakt, egal was der Kunde schreibt
+    if not session['started']:
         session['started'] = True
         session['step'] = 0
         resp.message(
