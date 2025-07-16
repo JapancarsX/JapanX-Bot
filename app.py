@@ -21,10 +21,10 @@ EMAIL_PASS = os.environ.get('EMAIL_PASS')
 EMAIL_RECEIVER = os.environ.get('EMAIL_RECEIVER')
 
 questions = [
-    "Welche Automarke suchst du? (z. B. Toyota, Honda, Nissan...)",
-    "Welches Modell interessiert dich? (z. B. Civic, Corolla, Skyline...)",
-    "Wie hoch darf der maximale Kilometerstand sein? (z. B. unter 100.000 km)",
-    "Gibt es besondere Wünsche oder Anforderungen? (z. B. Automatik, Schiebedach, Hybrid...)",
+    "Welche Automarke suchst du? (z.\u202fB. Toyota, Honda, Nissan...)",
+    "Welches Modell interessiert dich? (z.\u202fB. Civic, Corolla, Skyline...)",
+    "Wie hoch darf der maximale Kilometerstand sein? (z.\u202fB. unter 100.000 km)",
+    "Gibt es besondere Wünsche oder Anforderungen? (z.\u202fB. Automatik, Schiebedach, Hybrid...)",
     "Hast du noch weitere Wünsche, die wir berücksichtigen sollen?",
     "Wie lautet dein Vor- und Nachname?",
     "Wie lautet deine E-Mail-Adresse?"
