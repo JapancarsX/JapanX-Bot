@@ -26,6 +26,7 @@ questions = [
     "Bevor wir starten, wähle bitte eine Option:\n"
     "1⃣ Auto suchen\n"
     "2⃣ Informationen zum Ablauf",
+    "Möchtest du jetzt mit der Fahrzeugsuche starten? (Ja/Nein)",
     "Welche Automarke suchst du? (z. B. Toyota, Honda, Nissan...)",
     "Welches Modell interessiert dich? (z. B. Civic, Corolla, Skyline...)",
     "Wie hoch darf der maximale Kilometerstand sein? (z. B. unter 100.000 km)",
@@ -70,6 +71,17 @@ def whatsapp_bot():
             )
             resp.message(info)
             return str(resp)
+
+        if step == 1 and body == '1':
+            session['step'] += 1
+            resp.message(questions[1])
+            return str(resp)
+
+        if step == 2:
+            if body.lower() != 'ja':
+                resp.message("Kein Problem! Wenn du bereit bist, schreibe einfach 'Hallo', um neu zu starten.")
+                del sessions[from_number]
+                return str(resp)
 
         if step in [1, 2, 3] and body.lower() in ['egal', 'weiß nicht', 'ka', 'k.a.', 'keine ahnung']:
             resp.message(
