@@ -32,7 +32,6 @@ questions = [
     "Gibt es besondere Wünsche oder Anforderungen? (z. B. Automatik, Schiebedach, Hybrid...)",
     "Hast du noch weitere Wünsche, die wir berücksichtigen sollen?",
     "Wie lautet dein Vor- und Nachname?",
-    "Bitte gib auch deine Handynummer an für die Rückmeldung.",
     "Wie lautet deine E-Mail-Adresse?"
 ]
 
@@ -120,7 +119,7 @@ def send_email(answers, user_id):
 
     labels = [
         "Marke", "Modell", "Kilometerstand", "Sonderwünsche",
-        "Weitere Wünsche", "Name", "Handynummer", "E-Mail"
+        "Weitere Wünsche", "Name", "E-Mail"
     ]
 
     rows = "".join([
@@ -132,7 +131,7 @@ def send_email(answers, user_id):
     <html>
       <body>
         <div style='text-align: center;'>
-          <img src="https://i.imgur.com/DWJzPbe.png" alt="Japan X Logo" style="max-width:200px; display:block; margin: 0 auto 20px;" />
+          <img src="https://i.imgur.com/vwgUCFo.png" alt="Japan X Logo" style="max-width:200px; display:block; margin: 0 auto 20px;" />
         </div>
         <h2>Neue WhatsApp-Anfrage</h2>
         <p><strong>Absender:</strong> {user_id}</p>
