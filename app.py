@@ -1,5 +1,7 @@
 import os
 import smtplib
+import sqlite3
+from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from flask import Flask, request, session
@@ -10,6 +12,43 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "randomsecret")
 
 TUEV_CONTACT_LINK = "https://wa.me/4915738099687"
 TUEV_CONTACT_NAME = "183 cars"
+DB_FILE = "user_state.db"
+
+# --- Initialisiere SQLite-Datenbank ---
+def init_db():
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute(
+            "CREATE TABLE IF NOT EXISTS finished_users (number TEXT PRIMARY KEY, until DATETIME)"
+        )
+        conn.commit()
+
+init_db()
+
+def set_finished(number):
+    until = datetime.now() + timedelta(days=3)
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute(
+            "INSERT OR REPLACE INTO finished_users (number, until) VALUES (?, ?)",
+            (number, until.isoformat()),
+        )
+        conn.commit()
+
+def get_finished_until(number):
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute("SELECT until FROM finished_users WHERE number = ?", (number,))
+        row = c.fetchone()
+        if row:
+            return datetime.fromisoformat(row[0])
+        return None
+
+def clear_finished(number):
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM finished_users WHERE number = ?", (number,))
+        conn.commit()
 
 # --- E-Mail-Sende-Funktion ---
 def send_email(subject, body):
@@ -53,13 +92,35 @@ def send_email(subject, body):
 def whatsapp():
     incoming_msg = request.values.get('Body', '').strip()
     lower_msg = incoming_msg.lower()
+    customer_number = request.values.get('From')
     resp = MessagingResponse()
     msg = resp.message()
 
-    # Menü explizit anfordern
+    # 3-Tage-Session-Check
+    finished_until = get_finished_until(customer_number)
+    now = datetime.now()
+
+    # User hat abgeschlossen und 3 Tage sind noch nicht vorbei
+    if finished_until and finished_until > now:
+        if lower_msg in ['menü', 'menu']:
+            clear_finished(customer_number)
+            session["step"] = None
+            msg.body(
+                "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
+                "1️⃣ Fahrzeugsuche\n"
+                "2️⃣ TÜV- & Serviceanfrage\n"
+                "3️⃣ Wie funktioniert der Import?\n\n"
+                "Antworten Sie einfach mit 1, 2 oder 3."
+            )
+        return str(resp)
+
+    # Zeit abgelaufen: Session für User zurücksetzen
+    if finished_until and finished_until <= now:
+        clear_finished(customer_number)
+
+    # Menü explizit anfordern (funktioniert immer)
     if lower_msg in ['menü', 'menu']:
         session["step"] = None
-        session["finished"] = False
         msg.body(
             "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
             "1️⃣ Fahrzeugsuche\n"
@@ -69,15 +130,9 @@ def whatsapp():
         )
         return str(resp)
 
-    # Nach Abschluss: Nur noch auf "menü" reagieren!
-    if session.get("finished"):
-        # Keine Reaktion, außer auf "menü" oben
-        return str(resp)
-
     # Begrüßung / Menü bei Erstkontakt oder Reset
     if lower_msg in ['start', 'hallo', 'hi', 'help']:
         session["step"] = None
-        session["finished"] = False
         msg.body(
             "Willkommen bei JapanX Import GmbH! 👋\n\n"
             "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
@@ -93,7 +148,6 @@ def whatsapp():
     # Fahrzeugsuche Menü
     if lower_msg in ['1', '1️⃣', 'fahrzeugsuche']:
         session["step"] = "fahrzeugsuche"
-        session["finished"] = False
         msg.body(
             "Super, Sie möchten ein Fahrzeug suchen! 🚗\n\n"
             "Bitte schicken Sie uns einfach eine Nachricht mit diesen Infos zu Ihrem Wunschfahrzeug:\n"
@@ -107,8 +161,8 @@ def whatsapp():
 
     # TÜV
     if lower_msg in ['2', '2️⃣', 'tüv', 'tüv- & serviceanfrage']:
+        set_finished(customer_number)
         session["step"] = None
-        session["finished"] = True
         msg.body(
             "Sie interessieren sich für unseren TÜV- & Servicepartner. 🛠️\n\n"
             "Wir leiten Sie gern an unsere Partnerwerkstatt weiter!\n"
@@ -123,8 +177,8 @@ def whatsapp():
 
     # Import Ablauf
     if lower_msg in ['3', '3️⃣', 'ablauf', 'wie funktioniert der import']:
+        set_finished(customer_number)
         session["step"] = None
-        session["finished"] = True
         msg.body(
             "So funktioniert der Import bei uns:\n\n"
             "1️⃣ Sie teilen uns Ihre Fahrzeugwünsche mit.\n"
@@ -139,7 +193,6 @@ def whatsapp():
     # Nach der Auswahl von "Fahrzeugsuche" kommt hier die Fahrzeuganfrage
     if session.get("step") == "fahrzeugsuche":
         try:
-            customer_number = request.values.get('From')
             send_email(
                 subject="Neue Fahrzeugsuche über WhatsApp-Bot",
                 body=f"Absender: {customer_number}\n\n{incoming_msg}"
@@ -153,11 +206,11 @@ def whatsapp():
             msg.body(
                 "Entschuldigung, beim Versenden Ihrer Anfrage ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut."
             )
+        set_finished(customer_number)
         session["step"] = None
-        session["finished"] = True
         return str(resp)
 
-    # Fallback: Nach dem Abschluss keine weiteren Antworten
+    # Fallback: Keine Reaktion
     return str(resp)
 
 if __name__ == '__main__':
