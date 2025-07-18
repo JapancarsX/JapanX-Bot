@@ -103,8 +103,8 @@ def whatsapp():
     # User hat abgeschlossen und 3 Tage sind noch nicht vorbei
     if finished_until and finished_until > now:
         if lower_msg in ['menü', 'menu']:
-            clear_finished(customer_number)  # <-- Anpassung: User als "neu" behandeln!
-            session["step"] = None
+            clear_finished(customer_number)
+            session.clear()  # <-- NEU: Session komplett zurücksetzen!
             msg.body(
                 "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
                 "1️⃣ Fahrzeugsuche\n"
@@ -117,11 +117,12 @@ def whatsapp():
     # Zeit abgelaufen: Session für User zurücksetzen
     if finished_until and finished_until <= now:
         clear_finished(customer_number)
+        session.clear()
 
     # Menü explizit anfordern (funktioniert immer)
     if lower_msg in ['menü', 'menu']:
-        clear_finished(customer_number)  # <-- Auch hier: Immer als "neu" behandeln!
-        session["step"] = None
+        clear_finished(customer_number)
+        session.clear()  # <-- NEU: Session komplett zurücksetzen!
         msg.body(
             "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
             "1️⃣ Fahrzeugsuche\n"
@@ -133,7 +134,7 @@ def whatsapp():
 
     # Begrüßung / Menü bei Erstkontakt oder Reset
     if lower_msg in ['start', 'hallo', 'hi', 'help']:
-        session["step"] = None
+        session.clear()
         msg.body(
             "Willkommen bei JapanX Import GmbH! 👋\n\n"
             "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
@@ -163,7 +164,7 @@ def whatsapp():
     # TÜV
     if lower_msg in ['2', '2️⃣', 'tüv', 'tüv- & serviceanfrage']:
         set_finished(customer_number)
-        session["step"] = None
+        session.clear()
         msg.body(
             "Sie interessieren sich für unseren TÜV- & Servicepartner. 🛠️\n\n"
             "Wir leiten Sie gern an unsere Partnerwerkstatt weiter!\n"
@@ -179,7 +180,7 @@ def whatsapp():
     # Import Ablauf
     if lower_msg in ['3', '3️⃣', 'ablauf', 'wie funktioniert der import']:
         set_finished(customer_number)
-        session["step"] = None
+        session.clear()
         msg.body(
             "So funktioniert der Import bei uns:\n\n"
             "1️⃣ Sie teilen uns Ihre Fahrzeugwünsche mit.\n"
@@ -208,7 +209,7 @@ def whatsapp():
                 "Entschuldigung, beim Versenden Ihrer Anfrage ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut."
             )
         set_finished(customer_number)
-        session["step"] = None
+        session.clear()
         return str(resp)
 
     # Fallback: Keine Reaktion
