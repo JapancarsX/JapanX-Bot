@@ -14,7 +14,6 @@ TUEV_CONTACT_LINK = "https://wa.me/4915738099687"
 TUEV_CONTACT_NAME = "183 cars"
 DB_FILE = "user_state.db"
 
-# --- Initialisiere SQLite-Datenbank ---
 def init_db():
     with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
@@ -50,7 +49,6 @@ def clear_finished(number):
         c.execute("DELETE FROM finished_users WHERE number = ?", (number,))
         conn.commit()
 
-# --- E-Mail-Sende-Funktion ---
 def send_email(subject, body):
     from_email = os.environ.get('EMAIL_USER')
     from_password = os.environ.get('EMAIL_PASS')
@@ -64,8 +62,6 @@ def send_email(subject, body):
     msg["To"] = to_email
 
     text = f"{subject}\n\n{body}"
-
-    # Korrektur (Backslash-Fehler!): \n in <br> umwandeln, dann Variable nutzen
     body_html = body.replace('\n', '<br>')
 
     html = f"""
@@ -90,7 +86,6 @@ def send_email(subject, body):
         server.login(from_email, from_password)
         server.send_message(msg)
 
-# --- Bot-Handler ---
 @app.route('/whatsapp', methods=['POST'])
 def whatsapp():
     incoming_msg = request.values.get('Body', '').strip()
@@ -99,15 +94,14 @@ def whatsapp():
     resp = MessagingResponse()
     msg = resp.message()
 
-    # 3-Tage-Session-Check
     finished_until = get_finished_until(customer_number)
     now = datetime.now()
 
-    # User hat abgeschlossen und 3 Tage sind noch nicht vorbei
+    # -- WICHTIG: Hier der richtige Menü-Reset-Block! --
     if finished_until and finished_until > now:
         if lower_msg in ['menü', 'menu']:
             clear_finished(customer_number)
-            session.clear()  # <-- Session komplett zurücksetzen!
+            session.clear()
             msg.body(
                 "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
                 "1️⃣ Fahrzeugsuche\n"
@@ -115,7 +109,10 @@ def whatsapp():
                 "3️⃣ Wie funktioniert der Import?\n\n"
                 "Antworten Sie einfach mit 1, 2 oder 3."
             )
-        return str(resp)
+            return str(resp)
+        else:
+            # Blockiere alles außer menu/menü solange der Zeitblock läuft
+            return str(resp)
 
     # Zeit abgelaufen: Session für User zurücksetzen
     if finished_until and finished_until <= now:
@@ -125,7 +122,7 @@ def whatsapp():
     # Menü explizit anfordern (funktioniert immer)
     if lower_msg in ['menü', 'menu']:
         clear_finished(customer_number)
-        session.clear()  # <-- Session komplett zurücksetzen!
+        session.clear()
         msg.body(
             "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
             "1️⃣ Fahrzeugsuche\n"
@@ -135,7 +132,6 @@ def whatsapp():
         )
         return str(resp)
 
-    # Begrüßung / Menü bei Erstkontakt oder Reset
     if lower_msg in ['start', 'hallo', 'hi', 'help']:
         session.clear()
         msg.body(
@@ -150,7 +146,6 @@ def whatsapp():
         )
         return str(resp)
 
-    # Fahrzeugsuche Menü
     if lower_msg in ['1', '1️⃣', 'fahrzeugsuche']:
         session["step"] = "fahrzeugsuche"
         msg.body(
@@ -164,7 +159,6 @@ def whatsapp():
         )
         return str(resp)
 
-    # TÜV
     if lower_msg in ['2', '2️⃣', 'tüv', 'tüv- & serviceanfrage']:
         set_finished(customer_number)
         session.clear()
@@ -180,7 +174,6 @@ def whatsapp():
         )
         return str(resp)
 
-    # Import Ablauf
     if lower_msg in ['3', '3️⃣', 'ablauf', 'wie funktioniert der import']:
         set_finished(customer_number)
         session.clear()
@@ -195,7 +188,6 @@ def whatsapp():
         )
         return str(resp)
 
-    # Nach der Auswahl von "Fahrzeugsuche" kommt hier die Fahrzeuganfrage
     if session.get("step") == "fahrzeugsuche":
         try:
             send_email(
@@ -215,7 +207,6 @@ def whatsapp():
         session.clear()
         return str(resp)
 
-    # Fallback: Keine Reaktion
     return str(resp)
 
 if __name__ == '__main__':
