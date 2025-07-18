@@ -11,14 +11,14 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "randomsecret")  # Für 
 TUEV_CONTACT_LINK = "https://wa.me/4915738099687"
 TUEV_CONTACT_NAME = "183 cars"
 
-# --- E-Mail-Sende-Funktion mit HTML ---
-def send_email(subject, body, to_email):
-    from_email = os.environ.get('MAIL_USER')
-    from_password = os.environ.get('MAIL_PASS')
+# --- E-Mail-Sende-Funktion mit Render-Variablen ---
+def send_email(subject, body):
+    from_email = os.environ.get('EMAIL_USER')
+    from_password = os.environ.get('EMAIL_PASS')
+    to_email = os.environ.get('EMAIL_RECEIVER')
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
 
-    # HTML E-Mail vorbereiten
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = from_email
@@ -111,13 +111,13 @@ def whatsapp():
         try:
             send_email(
                 subject="Neue Fahrzeugsuche über WhatsApp-Bot",
-                body=f"{incoming_msg}",
-                to_email=os.environ.get('MAIL_USER')
+                body=f"{incoming_msg}"
             )
             msg.body(
                 "Vielen Dank für Ihre Angaben! 🙏 Wir prüfen Ihre Anfrage und melden uns zeitnah mit passenden Angeboten bei Ihnen."
             )
         except Exception as e:
+            print("E-Mail Fehler:", e)  # Für das Log!
             msg.body(
                 "Entschuldigung, beim Versenden Ihrer Anfrage ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut."
             )
