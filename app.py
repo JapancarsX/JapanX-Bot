@@ -65,13 +65,16 @@ def send_email(subject, body):
 
     text = f"{subject}\n\n{body}"
 
+    # Korrektur (Backslash-Fehler!): \n in <br> umwandeln, dann Variable nutzen
+    body_html = body.replace('\n', '<br>')
+
     html = f"""
     <html>
       <body>
         <h2 style="color:#333; font-size:1.4em;">Neue Fahrzeugsuche-Anfrage über WhatsApp</h2>
         <p><b>Kundendaten:</b></p>
         <div style="font-size:1.1em; font-family:Arial, sans-serif;">
-            {body.replace('\n', '<br>')}
+            {body_html}
         </div>
       </body>
     </html>
@@ -104,7 +107,7 @@ def whatsapp():
     if finished_until and finished_until > now:
         if lower_msg in ['menü', 'menu']:
             clear_finished(customer_number)
-            session.clear()  # <-- NEU: Session komplett zurücksetzen!
+            session.clear()  # <-- Session komplett zurücksetzen!
             msg.body(
                 "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
                 "1️⃣ Fahrzeugsuche\n"
@@ -122,7 +125,7 @@ def whatsapp():
     # Menü explizit anfordern (funktioniert immer)
     if lower_msg in ['menü', 'menu']:
         clear_finished(customer_number)
-        session.clear()  # <-- NEU: Session komplett zurücksetzen!
+        session.clear()  # <-- Session komplett zurücksetzen!
         msg.body(
             "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
             "1️⃣ Fahrzeugsuche\n"
