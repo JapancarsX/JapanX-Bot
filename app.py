@@ -103,7 +103,7 @@ def whatsapp():
     # User hat abgeschlossen und 3 Tage sind noch nicht vorbei
     if finished_until and finished_until > now:
         if lower_msg in ['menü', 'menu']:
-            clear_finished(customer_number)
+            clear_finished(customer_number)  # <-- Anpassung: User als "neu" behandeln!
             session["step"] = None
             msg.body(
                 "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
@@ -120,6 +120,7 @@ def whatsapp():
 
     # Menü explizit anfordern (funktioniert immer)
     if lower_msg in ['menü', 'menu']:
+        clear_finished(customer_number)  # <-- Auch hier: Immer als "neu" behandeln!
         session["step"] = None
         msg.body(
             "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
