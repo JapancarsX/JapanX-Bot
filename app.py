@@ -97,97 +97,92 @@ def whatsapp():
     finished_until = get_finished_until(customer_number)
     now = datetime.now()
 
-    # -- WICHTIG: Hier der richtige Menü-Reset-Block! --
+    # Session-Blockierung nach Abschluss
     if finished_until and finished_until > now:
         if lower_msg in ['menü', 'menu']:
             clear_finished(customer_number)
             session.clear()
             msg.body(
-                "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
+                "👋 Willkommen bei JapanX Import GmbH!\n"
+                "Wie können wir Ihnen weiterhelfen? Bitte wählen Sie eine der folgenden Optionen:\n\n"
                 "1️⃣ Fahrzeugsuche\n"
-                "2️⃣ TÜV- & Serviceanfrage\n"
-                "3️⃣ Wie funktioniert der Import?\n\n"
-                "Antworten Sie einfach mit 1, 2 oder 3."
+                "2️⃣ TÜV- & Serviceanfrage\n\n"
+                "👉 Antworten Sie einfach mit 1 oder 2.\n\n"
+                "Liebe Grüße\n"
+                "Ihr JapanX Import Team"
             )
             return str(resp)
         else:
-            # Blockiere alles außer menu/menü solange der Zeitblock läuft
             return str(resp)
 
-    # Zeit abgelaufen: Session für User zurücksetzen
+    # Ablaufende Session wird zurückgesetzt
     if finished_until and finished_until <= now:
         clear_finished(customer_number)
         session.clear()
 
-    # Menü explizit anfordern (funktioniert immer)
+    # Menü explizit anfordern
     if lower_msg in ['menü', 'menu']:
         clear_finished(customer_number)
         session.clear()
         msg.body(
-            "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
+            "👋 Willkommen bei JapanX Import GmbH!\n"
+            "Wie können wir Ihnen weiterhelfen? Bitte wählen Sie eine der folgenden Optionen:\n\n"
             "1️⃣ Fahrzeugsuche\n"
-            "2️⃣ TÜV- & Serviceanfrage\n"
-            "3️⃣ Wie funktioniert der Import?\n\n"
-            "Antworten Sie einfach mit 1, 2 oder 3."
-        )
-        return str(resp)
-
-    if lower_msg in ['start', 'hallo', 'hi', 'help']:
-        session.clear()
-        msg.body(
-            "Willkommen bei JapanX Import GmbH! 👋\n\n"
-            "Wie können wir Ihnen helfen? Bitte wählen Sie eine Option:\n\n"
-            "1️⃣ Fahrzeugsuche\n"
-            "2️⃣ TÜV- & Serviceanfrage\n"
-            "3️⃣ Wie funktioniert der Import?\n\n"
-            "Wir melden uns in Kürze bei Ihnen.\n\n"
+            "2️⃣ TÜV- & Serviceanfrage\n\n"
+            "👉 Antworten Sie einfach mit 1 oder 2.\n\n"
             "Liebe Grüße\n"
             "Ihr JapanX Import Team"
         )
         return str(resp)
 
-    if lower_msg in ['1', '1️⃣', 'fahrzeugsuche']:
-        session["step"] = "fahrzeugsuche"
+    # Begrüßung / Menü bei Erstkontakt oder Reset
+    if lower_msg in ['start', 'hallo', 'hi', 'help']:
+        session.clear()
         msg.body(
-            "Super, Sie möchten ein Fahrzeug suchen! 🚗\n\n"
-            "Bitte schicken Sie uns einfach eine Nachricht mit diesen Infos zu Ihrem Wunschfahrzeug:\n"
-            "- Marke & Modell\n"
-            "- Maximaler Kilometerstand\n"
-            "- Maximaler Jahrgang/Baujahr\n"
-            "- Weitere Wünsche oder Besonderheiten\n\n"
-            "Wir prüfen Ihre Anfrage und melden uns schnellstmöglich mit passenden Angeboten zurück."
+            "👋 Willkommen bei JapanX Import GmbH!\n"
+            "Wie können wir Ihnen weiterhelfen? Bitte wählen Sie eine der folgenden Optionen:\n\n"
+            "1️⃣ Fahrzeugsuche\n"
+            "2️⃣ TÜV- & Serviceanfrage\n\n"
+            "👉 Antworten Sie einfach mit 1 oder 2.\n\n"
+            "Liebe Grüße\n"
+            "Ihr JapanX Import Team"
         )
         return str(resp)
 
+    # Fahrzeugsuche Menü (Option 1)
+    if lower_msg in ['1', '1️⃣', 'fahrzeugsuche']:
+        session["step"] = "fahrzeugsuche"
+        msg.body(
+            "🚗 Vielen Dank für Ihre Anfrage zum Fahrzeugimport!\n"
+            "Damit wir gezielt nach passenden Angeboten suchen können, senden Sie uns bitte folgende Informationen zu Ihrem Wunschfahrzeug:\n\n"
+            "🔹 Marke & Modell\n"
+            "📉 Max. Kilometerstand\n"
+            "📅 +/- Baujahr\n"
+            "⭐ Besondere Wünsche oder Ausstattung\n\n"
+            "Sobald Ihre Angaben bei uns eingehen, prüfen wir verfügbare Optionen und melden uns zeitnah mit passenden Vorschlägen zurück."
+        )
+        return str(resp)
+
+    # TÜV & Serviceanfrage (Option 2)
     if lower_msg in ['2', '2️⃣', 'tüv', 'tüv- & serviceanfrage']:
         set_finished(customer_number)
         session.clear()
         msg.body(
-            "Sie interessieren sich für unseren TÜV- & Servicepartner. 🛠️\n\n"
-            "Wir leiten Sie gern an unsere Partnerwerkstatt weiter!\n"
-            "Wenn Sie möchten, können Sie direkt folgende Infos mitschicken:\n"
-            "- 'TÜV Anfrage'\n"
-            "- Marke, Modell und Importland\n\n"
-            f"Hier geht's direkt zu unserem Partner {TUEV_CONTACT_NAME} auf WhatsApp:\n{TUEV_CONTACT_LINK}\n\n"
-            "Unser Partner meldet sich zeitnah bei Ihnen!\n\n"
-            "Falls Sie das Menü erneut benötigen, schreiben Sie einfach 'menü'."
+            "🔧 Sie interessieren sich für unseren TÜV- & Servicepartner?\n"
+            "Wir leiten Ihre Anfrage gerne an unsere Partnerwerkstatt weiter! 🛠️\n\n"
+            "Damit Ihr Anliegen schnell bearbeitet werden kann, senden Sie bitte folgende Infos mit:\n"
+            "📝 „TÜV Anfrage“\n"
+            "🚗 Marke & Modell\n"
+            "📅 Baujahr\n"
+            "🌍 Importland\n\n"
+            "📲 Direktkontakt zu unserem Partner 183 Cars auf WhatsApp:\n"
+            "https://wa.me/4915738099687\n\n"
+            "✅ Unser Partner meldet sich zeitnah bei Ihnen!\n\n"
+            "📌 Tipp: Schreiben Sie „menü“, um unser Hauptmenü erneut aufzurufen."
         )
         return str(resp)
 
-    if lower_msg in ['3', '3️⃣', 'ablauf', 'wie funktioniert der import']:
-        set_finished(customer_number)
-        session.clear()
-        msg.body(
-            "So funktioniert der Import bei uns:\n\n"
-            "1️⃣ Sie teilen uns Ihre Fahrzeugwünsche mit.\n"
-            "2️⃣ Wir suchen passende Autos und beraten Sie persönlich.\n"
-            "3️⃣ Nach Zusage kümmern wir uns um alle Importformalitäten und die Verzollung.\n"
-            "4️⃣ Ihr Fahrzeug kommt sicher in Deutschland an – Sie können es selbst abholen oder sich liefern lassen.\n\n"
-            "Bei Fragen sind wir jederzeit für Sie da!\n\n"
-            "Falls Sie das Menü erneut benötigen, schreiben Sie einfach 'menü'."
-        )
-        return str(resp)
-
+    # Nach der Auswahl von "Fahrzeugsuche" kommt hier die Fahrzeuganfrage
     if session.get("step") == "fahrzeugsuche":
         try:
             send_email(
@@ -195,8 +190,8 @@ def whatsapp():
                 body=f"Absender: {customer_number}\n\n{incoming_msg}"
             )
             msg.body(
-                "Vielen Dank für Ihre Angaben! 🙏 Wir prüfen Ihre Anfrage und melden uns zeitnah mit passenden Angeboten bei Ihnen.\n\n"
-                "Falls Sie das Menü erneut benötigen, schreiben Sie einfach 'menü'."
+                "✅ Vielen Dank für Ihre Angaben!\n"
+                "🔍 Wir schauen uns Ihre Wünsche jetzt im Detail an und melden uns in Kürze mit passenden Angeboten bei Ihnen zurück. 🚗📩"
             )
         except Exception as e:
             print("E-Mail Fehler:", e)
