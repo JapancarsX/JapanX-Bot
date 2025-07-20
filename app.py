@@ -191,7 +191,8 @@ def whatsapp():
             )
             msg.body(
                 "✅ Vielen Dank für Ihre Angaben!\n"
-                "🔍 Wir schauen uns Ihre Wünsche jetzt im Detail an und melden uns in Kürze mit passenden Angeboten bei Ihnen zurück. 🚗📩"
+                "🔍 Wir schauen uns Ihre Wünsche jetzt im Detail an und melden uns in Kürze mit passenden Angeboten bei Ihnen zurück. 🚗📩\n\n"
+                "📌 Tipp: Schreiben Sie „menu“, um unser Hauptmenü erneut aufzurufen."
             )
         except Exception as e:
             print("E-Mail Fehler:", e)
